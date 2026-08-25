@@ -1,0 +1,27 @@
+websites:
+  - https://boxcarpress.us
+  - https://boxcarpress.com
+  - https://bellafigura.com
+  - https://smockpaper.com
+  - https://ladiesofletterpress.com
+  - https://printinghistory.org
+  
+contact: brian.pribis@boxcarpress.com
+
+sender: itville@boxcarpress.com
+
+delay: 5 #seconds
+
+notify: True
+
+renotify: False
+  
+log_level: 3 #0=no; 1=stdin; 2=log; 3=both
+log_file: /var/log/pydown.log
+
+debug: False
+
+smtp_port: 25 #for testing
+smtp_server: localhost
+smtp_user: None
+smtp_password: None

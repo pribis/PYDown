@@ -1,0 +1,22 @@
+websites:
+		- example.com
+  
+contact: to@example.com
+
+sender: from@example.com
+
+delay: 5 #seconds, default=5
+
+notify: True #default=False
+
+renotify: False #default=False
+  
+log_level: 3 #0=no; 1=stdin; 2=log; 3=both
+log_file: /var/log/pydown.log
+
+debug: True #default=True
+
+smtp_port: 25 #for testing
+smtp_server: localhost
+smtp_user: None
+smtp_password: None
