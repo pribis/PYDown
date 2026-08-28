@@ -1,6 +1,8 @@
 import requests
 import yaml
-from concurrent.futures import ThreadPoolExecutor as te
+from concurrent.futures import ThreadPoolExecutor as threads
+import concurrent.futures
+
 import time
 import datetime as dt
 import smtplib
@@ -34,18 +36,21 @@ def check(website,delay=5,notify=True,renotify=False):
     notified = False
     prev_err_key = None
 
+    log(f"Checking {website}")
     while(1):
         try:
-            res = requests.get(website,timeout=5)
-            res.raise_for_status()
-            if res.status_code == 200 and prev_err_key != None:
-                #We'll always only notify once.
-                try:
-                    send_mail(f'Restored {website}')
-                except Exception as e:
-                    print(e.message)
+            with requests.Session() as session:
+                res = session.get(website,timeout=5)
+                res.raise_for_status()
+                if res.status_code == 200 and prev_err_key != None:
+                    #We'll always only notify once.
+                    try:
+                        send_mail(f'Restored {website}')
+                    except Exception as e:
+                        print(e.message)
                 prev_err_key = None
                 notified = False
+
         except requests.exceptions.HTTPError as e:
             errc_key = e.args[0]
             if prev_err_key != errc_key:
@@ -67,17 +72,20 @@ def check(website,delay=5,notify=True,renotify=False):
 
 def log(msg):
     if log_level >= 2:
-        with open(log_file, 'w') as log:
-            log.write(msg)
         if log_level == 3:
             print(msg)
+        try:
+            with open(log_file, 'a') as log:
+                log.write(msg + "\n")
+        except Exception as e:
+            print(e)
+            exit(1)
             
     elif log_level == 1:
         print(msg)
     else:
         return
-    
-    
+      
 if __name__ == '__main__':
     config = None
     prog_path = path.dirname(__file__)
@@ -130,8 +138,18 @@ if __name__ == '__main__':
 
         if 'debug' in conf:
             debug = conf['debug']
-            
-        with te(max_workers=len(conf['websites'])) as executor:
-            for site in conf['websites']:
-                executor.submit(check, site, delay, notify=notify, renotify=renotify)
-                
+
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(conf['websites'])) as executor:
+                futures = [
+                    executor.submit(check, site, delay, notify=notify, renotify=renotify)
+                    for site in conf['websites']
+                ]
+                # Optionally wait for completion and propagate exceptions
+                for future in concurrent.futures.as_completed(futures):
+                    future.result()  # This will re-raise any exception from the task
+        except Exception as e:
+            # Handle broken thread pool
+            print(f"Thread pool error: {e}")
+
+
