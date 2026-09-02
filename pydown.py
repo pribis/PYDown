@@ -30,7 +30,7 @@ def send_mail(msg):
             with smtplib.SMTP(smtp_server, smtp_port) as s:
                 s.sendmail(msg['From'], [msg['To']], msg.as_string())
         except Exception as e:
-            log(e.args[1])
+            log(str(dt.datetime.now()) + ' ' + str(e.args[1]))
 
 def check(website,delay=5,notify=True,renotify=False):
     notified = False
@@ -40,14 +40,12 @@ def check(website,delay=5,notify=True,renotify=False):
     while(1):
         try:
             with requests.Session() as session:
-                res = session.get(website,timeout=5)
+                res = session.get(website,timeout=10)
                 res.raise_for_status()
                 if res.status_code == 200 and prev_err_key != None:
                     #We'll always only notify once.
-                    try:
-                        send_mail(f'Restored {website}')
-                    except Exception as e:
-                        print(e.message)
+                    send_mail(f'Restored {website}')
+                    
                 prev_err_key = None
                 notified = False
 
@@ -60,10 +58,10 @@ def check(website,delay=5,notify=True,renotify=False):
             if notified == False and notify == True:
                 if renotify == False:
                     notified = True
-                try:
-                    send_mail(f'{str(website)} shows {str(e)}')
-                except Exception as e:
-                    print(e)
+                send_mail(f'{str(website)} shows {str(e)}')
+        except Exception as e:
+            log(str(e))
+                
         #For now we are ignoring other request related errors. They
         #become increasingly difficult to deal with and we are mostly
         #interested in errors that aren't connection related. Those are
